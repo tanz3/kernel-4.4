@@ -2514,10 +2514,6 @@ static int fastrpc_file_free(struct fastrpc_file *fl)
 	spin_unlock(&fl->apps->hlock);
 	kfree(fl->debug_buf);
 
-	if (!fl->sctx) {
-		goto bail;
-	}
-	(void)fastrpc_release_current_dsp_process(fl);
 	if (!fl->sctx)
 		goto bail;
 
