@@ -1205,8 +1205,7 @@ bool icnss_is_fw_down(void)
 		return false;
 
 	return test_bit(ICNSS_FW_DOWN, &penv->state) ||
-		test_bit(ICNSS_PD_RESTART, &penv->state) ||
-		test_bit(ICNSS_REJUVENATE, &penv->state);
+		test_bit(ICNSS_PD_RESTART, &penv->state);
 }
 EXPORT_SYMBOL(icnss_is_fw_down);
 
@@ -1627,6 +1626,7 @@ static int wlfw_wlan_cfg_send_sync_msg(struct wlfw_wlan_cfg_req_msg_v01 *data)
 out:
 	penv->stats.cfg_req_err++;
 	ICNSS_QMI_ASSERT();
+
 	return ret;
 }
 
@@ -2484,7 +2484,8 @@ static int icnss_driver_event_pd_service_down(struct icnss_priv *priv,
 		goto out;
 	}
 
-	icnss_fw_crashed(priv, event_data);
+	if (!test_bit(ICNSS_PD_RESTART, &priv->state))
+		icnss_fw_crashed(priv, event_data);
 
 out:
 	kfree(data);
@@ -3159,8 +3160,6 @@ EXPORT_SYMBOL(icnss_disable_irq);
 
 int icnss_get_soc_info(struct device *dev, struct icnss_soc_info *info)
 {
-	char *fw_build_timestamp = NULL;
-
 	if (!penv || !dev) {
 		icnss_pr_err("Platform driver not initialized\n");
 		return -EINVAL;
@@ -3173,8 +3172,6 @@ int icnss_get_soc_info(struct device *dev, struct icnss_soc_info *info)
 	info->board_id = penv->board_info.board_id;
 	info->soc_id = penv->soc_info.soc_id;
 	info->fw_version = penv->fw_version_info.fw_version;
-	fw_build_timestamp = penv->fw_version_info.fw_build_timestamp;
-	fw_build_timestamp[QMI_WLFW_MAX_TIMESTAMP_LEN_V01] = '\0';
 	strlcpy(info->fw_build_timestamp,
 		penv->fw_version_info.fw_build_timestamp,
 		QMI_WLFW_MAX_TIMESTAMP_LEN_V01 + 1);
@@ -3580,6 +3577,7 @@ int icnss_trigger_recovery(struct device *dev)
 		goto out;
 	}
 
+	WARN_ON(1);
 	icnss_pr_warn("Initiate PD restart at WLAN FW, state: 0x%lx\n",
 		      priv->state);
 
