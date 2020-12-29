@@ -1,0 +1,24 @@
+# LGE configuration options
+
+config MACH_LGE
+	bool "LGE board"
+	depends on ARCH_QCOM
+	help
+	 Support for LGE boards.
+
+config MACH_LGE_MSM8998
+	bool "LGE MSM8998 boards"
+	depends on ARCH_MSM8998
+	select MACH_LGE
+	help
+	 Support for MSM8998 LGE boards.
+
+menu "LGE board selection"
+
+config MACH_JOAN
+	bool "joan board"
+	select MACH_LGE_MSM8998
+	help
+	 Support for LGE V30, codenamed joan.
+	 
+endmenu
