@@ -58,7 +58,7 @@
 #define ADSP_MMAP_ADD_PAGES 0x1000
 
 #define FASTRPC_ENOSUCH 39
-#define VMID_SSC_Q6     38
+#define VMID_SSC_Q6    38
 #define VMID_ADSP_Q6    6
 #define AC_VM_ADSP_HEAP_SHARED 33
 #define DEBUGFS_SIZE 3072
@@ -1282,7 +1282,8 @@ static int get_args(uint32_t kernel, struct smq_invoke_ctx *ctx)
 	ctx->used = copylen;
 
 	/* allocate new buffer */
-	if (copylen) {
+		DEFINE_DMA_ATTRS(ctx_attrs);
+
 		err = fastrpc_buf_alloc(ctx->fl, copylen, ctx_attrs,
 					0, 0, &ctx->buf);
 		if (err)
@@ -2509,8 +2510,8 @@ static int fastrpc_file_free(struct fastrpc_file *fl)
 		return 0;
 	cid = fl->cid;
 
-	(void)fastrpc_release_current_dsp_process(fl);
-
+    (void)fastrpc_release_current_dsp_process(fl);
+    
 	spin_lock(&fl->apps->hlock);
 	hlist_del_init(&fl->hn);
 	spin_unlock(&fl->apps->hlock);
@@ -2677,7 +2678,6 @@ static ssize_t fastrpc_debugfs_read(struct file *filp, char __user *buffer,
 	struct fastrpc_apps *me = &gfa;
 	struct fastrpc_file *fl = filp->private_data;
 	struct hlist_node *n;
-	struct fastrpc_buf *buf = NULL;
 	struct fastrpc_mmap *map = NULL;
 	struct fastrpc_mmap *gmaps = NULL;
 	struct smq_invoke_ctx *ictx = NULL;
@@ -3267,7 +3267,7 @@ static int fastrpc_restart_notifier_cb(struct notifier_block *nb,
 			else
 				smd_close(ctx->chan);
 
-			ctx->chan = 0;
+			ctx->chan = NULL;
 			pr_info("'restart notifier: closed /dev/%s c %d %d'\n",
 				 gcinfo[cid].name, MAJOR(me->dev_no), cid);
 		}
