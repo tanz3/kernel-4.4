@@ -444,6 +444,26 @@ static void get_fcc_split(struct pl_data *chip, int total_ua,
 		*master_ua = max(0, total_ua - *slave_ua);
 
 	*slave_ua = (*slave_ua * chip->taper_pct) / 100;
+
+#ifdef CONFIG_LGE_PM
+{	static int pre_total, pre_master, pre_slave;
+	if (pre_total != total_ua
+		|| pre_master != *master_ua
+		|| pre_slave != *slave_ua) {
+
+		pr_info("total(%d) is splitted to %d(PMI) : %d(SMB), "
+			"effective_total_ua = %d, slave_limited_ua = %d, "
+			"slave_pct = %d, hw_cc_delta_ua = %d, bcl_ua = %d\n",
+			total_ua/1000, *master_ua/1000, *slave_ua/1000,
+			effective_total_ua, slave_limited_ua,
+			chip->slave_pct, hw_cc_delta_ua, bcl_ua);
+
+		pre_total = total_ua;
+		pre_master = *master_ua;
+		pre_slave = *slave_ua;
+	}
+}
+#endif    
 }
 
 static void get_fcc_step_update_params(struct pl_data *chip, int main_fcc_ua,
@@ -996,6 +1016,20 @@ static int pl_disable_vote_callback(struct votable *votable,
 		if ((chip->pl_mode == POWER_SUPPLY_PL_USBIN_USBIN)
 			|| (chip->pl_mode == POWER_SUPPLY_PL_USBIN_USBIN_EXT))
 			split_settled(chip);
+
+#ifdef CONFIG_LGE_PM_VENEER_PSY
+{		extern bool unified_nodes_show(const char* key, char* value);
+		char buff [16] = { 0, };
+		int  test;
+
+		if (unified_nodes_show("support_fastpl", buff)
+			&& sscanf(buff, "%d", &test) && test == 1) {
+			pr_info("FASTPL: Disabling pl by %s is not permitted "
+				"for the purpose of 2nd charger IC test\n", client);
+			return 0;
+		}
+}
+#endif
 
 		if (!chip->fcc_step_update) {
 			/* pl_psy may be NULL while in the disable branch */
